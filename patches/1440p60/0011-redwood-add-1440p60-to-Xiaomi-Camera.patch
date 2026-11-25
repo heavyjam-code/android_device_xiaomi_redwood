@@ -1,0 +1,87 @@
+diff --git a/smali/com/android/camera/data/data/config/ComponentConfigVideoQuality.smali b/smali/com/android/camera/data/data/config/ComponentConfigVideoQuality.smali
+--- a/smali/com/android/camera/data/data/config/ComponentConfigVideoQuality.smali
++++ b/smali/com/android/camera/data/data/config/ComponentConfigVideoQuality.smali
+@@ -4933,6 +4933,74 @@
+     return v1
+ .end method
+ 
++# Expose the tested wide-camera mode only in normal rear video. Use the
++# existing menu's restrictions for 1080p60 and 4K30 (effects, capture intents,
++# secondary lenses). The QHD Android profile supplies recording dimensions.
++.method private appendRedwoodQhd60(IILcom/android/camera2/CameraCapabilities;I)V
++    .locals 5
++
++    const/16 v0, 0xa2
++    if-ne p1, v0, :done
++    if-nez p2, :done
++    if-nez p4, :done
++    if-eqz p3, :done
++    invoke-virtual {p0}, Lcom/android/camera/data/data/config/ComponentConfigVideoQuality;->isTwoComponent()Z
++    move-result v0
++    if-nez v0, :done
++
++    invoke-static {p3}, Lcom/android/camera2/CameraCapabilitiesUtil;->getCameraId(Lcom/android/camera2/CameraCapabilities;)I
++    move-result v0
++    invoke-static {}, Lcom/android/camera/module/loader/camera2/Camera2DataContainer;->getInstance()Lcom/android/camera/module/loader/camera2/Camera2DataContainer;
++    move-result-object v1
++    invoke-virtual {v1}, Lcom/android/camera/module/loader/camera2/Camera2DataContainer;->getMainBackCameraId()I
++    move-result v2
++    if-eq v0, v2, :wide
++    invoke-virtual {v1}, Lcom/android/camera/module/loader/camera2/Camera2DataContainer;->getVideoSATCameraId()I
++    move-result v2
++    if-ne v0, v2, :done
++
++    :wide
++    const/16 v0, 0xb
++    invoke-static {p2, v0}, Landroid/media/CamcorderProfile;->hasProfile(II)Z
++    move-result v0
++    if-eqz v0, :done
++    const/16 v0, 0xa00
++    const/16 v1, 0x5a0
++    invoke-direct {p0, v0, v1, p3}, Lcom/android/camera/data/data/config/ComponentConfigVideoQuality;->isSupport60FPS(IILcom/android/camera2/CameraCapabilities;)Z
++    move-result v0
++    if-eqz v0, :done
++
++    iget-object v0, p0, Lcom/android/camera/data/data/config/ComponentConfigVideoQuality;->mCurrentSupportArray:Landroid/util/SparseBooleanArray;
++    if-eqz v0, :done
++    const/16 v1, 0x63c
++    invoke-virtual {v0, v1}, Landroid/util/SparseBooleanArray;->get(I)Z
++    move-result v1
++    if-eqz v1, :done
++    const/16 v1, 0x81e
++    invoke-virtual {v0, v1}, Landroid/util/SparseBooleanArray;->get(I)Z
++    move-result v1
++    if-eqz v1, :done
++
++    # CameraSettings.dealVideoQuality parses "11,60" into Android QUALITY_QHD
++    # and the existing 60fps session setting. The same packed key is used by
++    # getPreferComponentValue when it checks a saved menu selection.
++    const/16 v1, 0xb3c
++    const/4 v2, 0x1
++    invoke-virtual {v0, v1, v2}, Landroid/util/SparseBooleanArray;->put(IZ)V
++    iget-object v0, p0, Lcom/android/camera/data/data/config/ComponentConfigVideoQuality;->mAutoFitSupportBooleanArray:Landroid/util/SparseBooleanArray;
++    invoke-virtual {v0, v1, v2}, Landroid/util/SparseBooleanArray;->put(IZ)V
++    new-instance v0, Lcom/android/camera/data/data/ComponentDataItem;
++    const-string v1, "11,60"
++    # ic_config_60fps in the target APK
++    const v2, 0x7f080381
++    const-string v3, "1440p 60 fps"
++    invoke-direct {v0, v1, v2, v2, v3}, Lcom/android/camera/data/data/ComponentDataItem;-><init>(Ljava/lang/String;IILjava/lang/String;)V
++    iget-object v4, p0, Lcom/android/camera/data/data/ComponentData;->mItems:Ljava/util/List;
++    invoke-interface {v4, v0}, Ljava/util/List;->add(Ljava/lang/Object;)Z
++    :done
++    return-void
++.end method
++
+ .method public reInit(IILcom/android/camera2/CameraCapabilities;I)V
+     .locals 15
+ 
+@@ -5601,6 +5669,8 @@
+     .line 315
+     .line 316
+     invoke-direct/range {v0 .. v5}, Lcom/android/camera/data/data/config/ComponentConfigVideoQuality;->generateItems(Ljava/util/List;Ljava/util/List;Lcom/android/camera/data/data/config/ComponentConfigVideoQuality$QualityLimitation;Lcom/android/camera/data/data/config/ComponentConfigVideoQuality$QualityLimitation;I)V
++
++    invoke-direct/range {p0 .. p4}, Lcom/android/camera/data/data/config/ComponentConfigVideoQuality;->appendRedwoodQhd60(IILcom/android/camera2/CameraCapabilities;I)V
+ 
+     .line 317
+     .line 318
